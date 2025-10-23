@@ -41,6 +41,12 @@ pkill -f traffic_analyzer
 # Filter by host
 ./traffic_analyzer.py list --host zybooks.com
 
+# Only show zybooks traffic (applies to stats, list, analyze, search, export)
+./traffic_analyzer.py stats --zybooks
+./traffic_analyzer.py list --zybooks
+./traffic_analyzer.py analyze --zybooks
+./traffic_analyzer.py export output.har --zybooks
+
 # Limit results
 ./traffic_analyzer.py list --limit 50
 

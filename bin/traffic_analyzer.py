@@ -27,6 +27,8 @@ class TrafficCapture:
     
     def __init__(self, db_path: str = "data/traffic.db"):
         self.db_path = db_path
+        self.only_zybooks = False
+        # initialize
         self.init_database()
         self.request_count = 0
     
@@ -120,24 +122,28 @@ class TrafficAnalyzerCLI:
     
     def __init__(self, db_path: str = "data/traffic.db"):
         self.db_path = db_path
+        self.only_zybooks = False
     
     def get_stats(self):
         """Get traffic statistics"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
-        cursor.execute("SELECT COUNT(*) FROM requests")
+
+        # Apply optional host filtering
+        clause, params = self._host_clause_and_params(None)
+
+        cursor.execute(f"SELECT COUNT(*) FROM requests {clause}", tuple(params))
         total = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(DISTINCT host) FROM requests")
+
+        cursor.execute(f"SELECT COUNT(DISTINCT host) FROM requests {clause}", tuple(params))
         unique_hosts = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT method, COUNT(*) as count FROM requests GROUP BY method")
+
+        cursor.execute(f"SELECT method, COUNT(*) as count FROM requests {clause} GROUP BY method", tuple(params))
         methods = cursor.fetchall()
-        
-        cursor.execute("SELECT AVG(duration) FROM requests")
+
+        cursor.execute(f"SELECT AVG(duration) FROM requests {clause}", tuple(params))
         avg_duration = cursor.fetchone()[0] or 0
-        
+
         conn.close()
         
         print(f"\n📊 Traffic Statistics")
@@ -155,13 +161,10 @@ class TrafficAnalyzerCLI:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        if host:
-            cursor.execute(
-                "SELECT * FROM requests WHERE host LIKE ? ORDER BY timestamp DESC LIMIT ?",
-                (f"%{host}%", limit)
-            )
-        else:
-            cursor.execute("SELECT * FROM requests ORDER BY timestamp DESC LIMIT ?", (limit,))
+        clause, params = self._host_clause_and_params(host)
+        # Add limit at the end of params
+        params_with_limit = params + [limit]
+        cursor.execute(f"SELECT * FROM requests {clause} ORDER BY timestamp DESC LIMIT ?", tuple(params_with_limit))
         
         rows = cursor.fetchall()
         conn.close()
@@ -182,7 +185,11 @@ class TrafficAnalyzerCLI:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        cursor.execute("SELECT * FROM requests WHERE id = ?", (request_id,))
+        # Respect zybooks-only filtering if set
+        if self.only_zybooks:
+            cursor.execute("SELECT * FROM requests WHERE id = ? AND host LIKE ?", (request_id, "%zybooks%"))
+        else:
+            cursor.execute("SELECT * FROM requests WHERE id = ?", (request_id,))
         row = cursor.fetchone()
         conn.close()
         
@@ -225,11 +232,16 @@ class TrafficAnalyzerCLI:
         cursor = conn.cursor()
         
         if request_id:
-            cursor.execute("SELECT * FROM requests WHERE id = ?", (request_id,))
+            # If zybooks-only is set, ensure the specific request matches
+            if self.only_zybooks:
+                cursor.execute("SELECT * FROM requests WHERE id = ? AND host LIKE ?", (request_id, "%zybooks%"))
+            else:
+                cursor.execute("SELECT * FROM requests WHERE id = ?", (request_id,))
             rows = [cursor.fetchone()]
             context = f"Analyzing request ID {request_id}"
         else:
-            cursor.execute("SELECT * FROM requests ORDER BY timestamp DESC LIMIT 20")
+            clause, params = self._host_clause_and_params(None)
+            cursor.execute(f"SELECT * FROM requests {clause} ORDER BY timestamp DESC LIMIT 20", tuple(params))
             rows = cursor.fetchall()
             context = "Analyzing last 20 requests"
         
@@ -317,11 +329,20 @@ class TrafficAnalyzerCLI:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        cursor.execute("""
-            SELECT * FROM requests 
-            WHERE url LIKE ? OR body LIKE ? OR response_body LIKE ?
-            ORDER BY timestamp DESC LIMIT 50
-        """, (f"%{query}%", f"%{query}%", f"%{query}%"))
+        # Build search clause and include host filtering if required
+        search_clause = "(url LIKE ? OR body LIKE ? OR response_body LIKE ? )"
+        search_params = [f"%{query}%", f"%{query}%", f"%{query}%"]
+
+        host_clause, host_params = self._host_clause_and_params(None)
+
+        if host_clause:
+            full_clause = f"WHERE {search_clause} AND " + host_clause[len('WHERE '):]
+            params = search_params + host_params
+        else:
+            full_clause = f"WHERE {search_clause}"
+            params = search_params
+
+        cursor.execute(f"SELECT * FROM requests {full_clause} ORDER BY timestamp DESC LIMIT 50", tuple(params))
         
         rows = cursor.fetchall()
         conn.close()
@@ -331,14 +352,38 @@ class TrafficAnalyzerCLI:
         
         for row in rows:
             print(f"ID {row['id']}: {row['method']} {row['url'][:60]}")
+
+    def _host_clause_and_params(self, host: Optional[str]):
+        """Return SQL WHERE clause and parameters based on host filter and zybooks-only flag.
+
+        host: explicit host substring to match (from CLI --host). If None, only the zybooks-only
+        setting is applied. Returns a tuple (clause, params) where clause includes leading
+        'WHERE' or is an empty string.
+        """
+        params: List[str] = []
+        clauses: List[str] = []
+
+        if host:
+            clauses.append("host LIKE ?")
+            params.append(f"%{host}%")
+
+        if self.only_zybooks:
+            clauses.append("host LIKE ?")
+            params.append("%zybooks%")
+
+        if clauses:
+            return "WHERE " + " AND ".join(clauses), params
+        return "", params
     
     def export_har(self, output_file: str, limit: int = 100):
         """Export traffic as HAR file"""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
-        cursor.execute("SELECT * FROM requests ORDER BY timestamp DESC LIMIT ?", (limit,))
+
+        clause, params = self._host_clause_and_params(None)
+        params_with_limit = params + [limit]
+        cursor.execute(f"SELECT * FROM requests {clause} ORDER BY timestamp DESC LIMIT ?", tuple(params_with_limit))
         rows = cursor.fetchall()
         conn.close()
         
@@ -446,10 +491,14 @@ Examples:
     parser.add_argument('--host', help='Filter by host')
     parser.add_argument('--limit', type=int, default=10, help='Limit results')
     parser.add_argument('--id', type=int, help='Request ID')
+    parser.add_argument('--zybooks', action='store_true', help='Only include requests from zybooks hosts')
     
     args = parser.parse_args()
     
     cli = TrafficAnalyzerCLI()
+    # Apply global filters from args
+    if args.zybooks:
+        cli.only_zybooks = True
     
     try:
         if args.command == 'proxy':
