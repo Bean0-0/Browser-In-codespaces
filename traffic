@@ -1,0 +1,4 @@
+#!/bin/bash
+# Convenience wrapper for traffic analyzer
+cd "$(dirname "$0")"
+./bin/traffic_analyzer.py "$@"

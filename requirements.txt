@@ -1,2 +1,1 @@
-aiohttp==3.9.1
-mitmproxy==10.1.5
+mitmproxy>=10.1.0

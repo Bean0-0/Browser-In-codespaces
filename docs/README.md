@@ -1,337 +1,170 @@
-# 🌐 HTTP Traffic Analyzer# 🌐 HTTP Traffic Analyzer# Browser Traffic Analyzer - Burp Suite Style
+# 🌐 HTTP Traffic Analyzer# Browser Traffic Analyzer - Burp Suite Style
 
 
 
-A **Burp Suite-style** HTTP/HTTPS traffic analysis tool that captures browser traffic and integrates with **GitHub Copilot** for AI-powered security and performance analysis.
+A **Burp Suite-style** HTTP/HTTPS traffic analysis tool that captures browser traffic and integrates with **GitHub Copilot** for AI-powered security and performance analysis.A professional HTTP/HTTPS proxy tool for capturing, analyzing, and replaying browser traffic in GitHub Codespaces, with AI-powered analysis using GitHub Copilot.
 
 
 
-## 📁 Project StructureA **Burp Suite-style** HTTP/HTTPS traffic analysis tool that captures browser traffic and integrates with **GitHub Copilot** for AI-powered security and performance analysis.A professional HTTP/HTTPS proxy tool for capturing, analyzing, and replaying browser traffic in GitHub Codespaces, with AI-powered analysis using GitHub Copilot.
+## 🎯 What It Does## 🚀 Features
 
 
 
-```
+- 🔍 **Captures** all HTTP/HTTPS traffic from your browser- **HTTP/HTTPS Proxy Server**: Intercepts all browser traffic
 
-.
+- 💾 **Stores** traffic in SQLite database for analysis- **Traffic Capture**: Stores all requests and responses in SQLite database
 
-├── bin/                          # Executables## 🎯 What It Does## 🚀 Features
+- 🤖 **Analyzes** with GitHub Copilot CLI for security insights- **Web Interface**: Beautiful, Burp Suite-style UI for viewing traffic
 
-│   ├── traffic_analyzer.py       # Main CLI tool
+- 📊 **Exports** to HAR format for external tools- **AI Analysis**: Copilot-powered security and performance analysis
 
-│   └── start_analyzer.sh         # Start script
+- 🔒 **Detects** security vulnerabilities and issues- **Request Replay**: Replay captured requests for testing
 
-├── certs/                        # HTTPS certificates
+- **Security Scanning**: Automatic detection of common vulnerabilities
 
-│   ├── mitmproxy-ca-cert.pem- 🔍 **Captures** all HTTP/HTTPS traffic from your browser- **HTTP/HTTPS Proxy Server**: Intercepts all browser traffic
+## 🚀 Quick Start- **Performance Metrics**: Track response times and identify bottlenecks
 
-│   ├── mitmproxy-ca-cert.cer
+- **Export Functionality**: Export captured traffic as JSON
 
-│   └── mitmproxy-ca-cert.p12- 💾 **Stores** traffic in SQLite database for analysis- **Traffic Capture**: Stores all requests and responses in SQLite database
+### 1. Start the Proxy
 
-├── data/                         # Captured traffic data
-
-│   ├── traffic.db                # SQLite database- 🤖 **Analyzes** with GitHub Copilot CLI for security insights- **Web Interface**: Beautiful, Burp Suite-style UI for viewing traffic
-
-│   └── *.har, *.json             # Exports
-
-├── docs/                         # Documentation- 📊 **Exports** to HAR format for external tools- **AI Analysis**: Copilot-powered security and performance analysis
-
-│   ├── README.md                 # Full documentation
-
-│   ├── GET_STARTED.md            # Quick start guide- 🔒 **Detects** security vulnerabilities and issues- **Request Replay**: Replay captured requests for testing
-
-│   ├── QUICK_START.md            # Command reference
-
-│   ├── CERTIFICATE_GUIDE.md      # HTTPS setup- **Security Scanning**: Automatic detection of common vulnerabilities
-
-│   └── CLEANUP_SUMMARY.md        # Change history
-
-├── logs/                         # Log files## 🚀 Quick Start- **Performance Metrics**: Track response times and identify bottlenecks
-
-│   └── proxy.log                 # Proxy server logs
-
-├── traffic                       # Convenience wrapper script- **Export Functionality**: Export captured traffic as JSON
-
-└── requirements.txt              # Python dependencies
-
-```### 1. Start the Proxy
-
-
-
-## 🚀 Quick Start## 📋 Prerequisites
-
-
-
-### 1. Start the Proxy```bash
-
-
-
-```bash./start_analyzer.sh- Python 3.8+
-
-./bin/start_analyzer.sh
-
-# or use the convenience wrapper```- GitHub Codespaces (or any Linux environment)
-
-./traffic proxy
-
-```- Modern web browser
-
-
-
-### 2. Configure BrowserThis will:
-
-
-
-**Firefox:** Settings → Network Settings → Manual proxy- Start the proxy server on port **8080**## 🛠️ Installation
-
-- HTTP Proxy: `localhost:8080`
-
-- HTTPS Proxy: `localhost:8080`- Create the traffic database
-
-
-
-**Chrome:**- Show you the certificate location1. Install dependencies:
+## 📋 Prerequisites
 
 ```bash
 
-google-chrome --proxy-server="localhost:8080"```bash
+./start_analyzer.sh- Python 3.8+
 
-```
+```- GitHub Codespaces (or any Linux environment)
+
+- Modern web browser
+
+This will:
+
+- Start the proxy server on port **8080**## 🛠️ Installation
+
+- Create the traffic database
+
+- Show you the certificate location1. Install dependencies:
+
+```bash
 
 ### 2. Configure Your Browserpip install -r requirements.txt
 
-### 3. Install Certificate (for HTTPS)
-
 ```
 
-```bash
-
-# Certificate location:**Firefox:**
-
-./certs/mitmproxy-ca-cert.pem
+**Firefox:**
 
 - Settings → Network Settings → Manual proxy configuration2. Start the proxy server:
 
-# See docs/CERTIFICATE_GUIDE.md for detailed instructions
+- HTTP Proxy: `localhost` Port: `8080````bash
 
-```- HTTP Proxy: `localhost` Port: `8080````bash
+- HTTPS Proxy: `localhost` Port: `8080`chmod +x start.sh
 
+- ✅ Also use this proxy for HTTPS./start.sh
 
+```
 
-## 📚 Commands- HTTPS Proxy: `localhost` Port: `8080`chmod +x start.sh
+**Chrome:**
 
-
-
-### Using Convenience Wrapper- ✅ Also use this proxy for HTTPS./start.sh
-
-
-
-```bash```
-
-# View statistics
-
-./traffic stats**Chrome:**
-
-
-
-# List recent requests```bashOr manually:
-
-./traffic list
+```bashOr manually:
 
 google-chrome --proxy-server="localhost:8080"```bash
 
-# Show request details
+```python proxy_server.py
 
-./traffic show 42```python proxy_server.py
-
-
-
-# Analyze with Copilot```
-
-./traffic analyze
+```
 
 ### 3. Install HTTPS Certificate
 
-# Search traffic
+The tool will start:
 
-./traffic search "api_key"The tool will start:
-
-
-
-# Export to HARFor HTTPS interception:- **Web Interface**: http://localhost:8081
-
-./traffic export traffic.har
+For HTTPS interception:- **Web Interface**: http://localhost:8081
 
 ```bash- **Proxy Server**: localhost:8080
 
-# Get help
-
-./traffic --help# Certificate is at:
-
-```
+# Certificate is at:
 
 ./certs/mitmproxy-ca-cert.pem## 🌐 Browser Configuration
 
-### Or Use Direct Path
 
 
+# Firefox: Settings → Certificates → Import### For Chrome/Chromium:
 
-```bash
-
-./bin/traffic_analyzer.py stats# Firefox: Settings → Certificates → Import### For Chrome/Chromium:
-
-./bin/traffic_analyzer.py list
-
-./bin/traffic_analyzer.py analyze# Chrome: Settings → Security → Manage Certificates → Import
-
-```
+# Chrome: Settings → Security → Manage Certificates → Import
 
 ```1. **Using Chrome flags** (recommended for Codespaces):
 
-## 🤖 Copilot Integration
-
    ```bash
 
-```bash
-
-# 1. Analyze trafficSee `CERTIFICATE_GUIDE.md` for detailed instructions.   google-chrome --proxy-server="localhost:8080" --ignore-certificate-errors
-
-./traffic analyze
+See `CERTIFICATE_GUIDE.md` for detailed instructions.   google-chrome --proxy-server="localhost:8080" --ignore-certificate-errors
 
    ```
 
-# 2. Use in VS Code Chat:
-
-@workspace analyze this HTTP traffic for security issues### 4. Browse the Web
-
-```
+### 4. Browse the Web
 
 2. **Using System Settings**:
 
-The analyze command will:
+Your traffic is now being captured! Visit any website.   - Go to Settings → System → Open proxy settings
 
-- Extract recent traffic dataYour traffic is now being captured! Visit any website.   - Go to Settings → System → Open proxy settings
-
-- Run basic security checks
-
-- Create JSON file for Copilot analysis   - Configure HTTP/HTTPS proxy: `localhost:8080`
-
-- Show you how to use Copilot Chat
+   - Configure HTTP/HTTPS proxy: `localhost:8080`
 
 ### 5. Analyze Traffic
 
-## 📖 Documentation
-
 ### For Firefox:
 
-- **[docs/README.md](docs/README.md)** - Complete documentation
+```bash
 
-- **[docs/GET_STARTED.md](docs/GET_STARTED.md)** - Detailed quick start```bash
+# View statistics1. Go to Settings → Network Settings → Settings
 
-- **[docs/QUICK_START.md](docs/QUICK_START.md)** - Command reference
+./traffic_analyzer.py stats2. Select "Manual proxy configuration"
 
-- **[docs/CERTIFICATE_GUIDE.md](docs/CERTIFICATE_GUIDE.md)** - HTTPS setup help# View statistics1. Go to Settings → Network Settings → Settings
+3. HTTP Proxy: `localhost`, Port: `8080`
 
+# List recent requests4. HTTPS Proxy: `localhost`, Port: `8080`
 
-
-## 🎯 Features./traffic_analyzer.py stats2. Select "Manual proxy configuration"
-
-
-
-- ✅ HTTP/HTTPS traffic capture3. HTTP Proxy: `localhost`, Port: `8080`
-
-- ✅ SQLite database storage
-
-- ✅ CLI interface for analysis# List recent requests4. HTTPS Proxy: `localhost`, Port: `8080`
-
-- ✅ GitHub Copilot integration
-
-- ✅ HAR/JSON export./traffic_analyzer.py list5. Check "Use this proxy server for all protocols"
-
-- ✅ Search and filter
-
-- ✅ Security analysis
+./traffic_analyzer.py list5. Check "Use this proxy server for all protocols"
 
 
 
-## 🔧 Requirements# Show specific request### For curl/command line:
+# Show specific request### For curl/command line:
 
+./traffic_analyzer.py show 42```bash
 
-
-```bash./traffic_analyzer.py show 42```bash
-
-pip install -r requirements.txt
-
-# or let start_analyzer.sh handle itcurl -x http://localhost:8080 https://example.com
-
-```
+curl -x http://localhost:8080 https://example.com
 
 # Analyze with Copilot```
 
-## 🛑 Stop Proxy
-
 ./traffic_analyzer.py analyze
 
-```bash
-
-pkill -f traffic_analyzer## 🔐 HTTPS Traffic Interception
-
-```
+## 🔐 HTTPS Traffic Interception
 
 # Search traffic
 
-## 📊 Data Management
-
 ./traffic_analyzer.py search "api_key"To intercept HTTPS traffic, you need to install mitmproxy's CA certificate:
 
-All captured traffic is stored in:
-
-- **Database:** `data/traffic.db`
-
-- **Exports:** `data/*.har`, `data/*.json`
-
-- **Logs:** `logs/proxy.log`# Export to HAR1. Configure your browser to use the proxy
 
 
+# Export to HAR1. Configure your browser to use the proxy
 
-## 🔒 Security Note./traffic_analyzer.py export traffic.har2. Visit: http://mitm.it
+./traffic_analyzer.py export traffic.har2. Visit: http://mitm.it
 
+```3. Download and install the certificate for your platform
 
+4. Restart your browser
 
-⚠️ This tool captures ALL traffic through the proxy. Use responsibly and only on networks/systems you control.```3. Download and install the certificate for your platform
+---
 
+## 📊 Using the Web Interface
 
+## 📚 Commands Reference
 
-## 📄 License4. Restart your browser
+1. Open http://localhost:8081 in your browser
 
+### Proxy Management2. Configure your browser's proxy settings (use a different browser or profile)
 
+3. Browse the web normally
 
-For educational and security testing purposes only.---
-
-
-
----## 📊 Using the Web Interface
-
-
-
-**Quick Commands:**## 📚 Commands Reference
-
-```bash
-
-./bin/start_analyzer.sh    # Start proxy1. Open http://localhost:8081 in your browser
-
-./traffic stats             # View stats
-
-./traffic analyze           # Analyze with Copilot### Proxy Management2. Configure your browser's proxy settings (use a different browser or profile)
-
-./traffic --help            # See all commands
-
-```3. Browse the web normally
-
-
-
-See **[docs/README.md](docs/README.md)** for complete documentation.```bash4. Watch traffic appear in the interface in real-time
-
+```bash4. Watch traffic appear in the interface in real-time
 
 # Start proxy
 
