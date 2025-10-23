@@ -151,7 +151,6 @@ class ProxyManager:
         self.app.router.add_post('/api/analyze/{id}', self.analyze_request)
         self.app.router.add_post('/api/replay/{id}', self.replay_request)
         self.app.router.add_delete('/api/clear', self.clear_traffic)
-        self.app.router.add_static('/static', '/workspaces/Browser-In-codespaces/static')
     
     async def index(self, request):
         """Serve the main web interface"""
@@ -610,8 +609,8 @@ async def start_web_server(manager: ProxyManager):
     print(f"🌐 Web interface running on http://localhost:{manager.web_port}")
 
 
-def start_proxy(proxy_port: int = 8080, db_path: str = "traffic.db"):
-    """Start the mitmproxy server"""
+async def start_proxy_async(proxy_port: int = 8080, db_path: str = "traffic.db"):
+    """Start the mitmproxy server asynchronously"""
     opts = options.Options(listen_host='0.0.0.0', listen_port=proxy_port)
     
     master = dump.DumpMaster(
@@ -626,9 +625,21 @@ def start_proxy(proxy_port: int = 8080, db_path: str = "traffic.db"):
     print(f"📊 Configure your browser to use proxy: localhost:{proxy_port}")
     
     try:
-        master.run()
-    except KeyboardInterrupt:
+        await master.run()
+    finally:
         master.shutdown()
+
+
+def start_proxy(proxy_port: int = 8080, db_path: str = "traffic.db"):
+    """Start the mitmproxy server"""
+    try:
+        asyncio.run(start_proxy_async(proxy_port, db_path))
+    except KeyboardInterrupt:
+        print("\n🛑 Proxy server stopped")
+    except Exception as e:
+        print(f"❌ Proxy server error: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
@@ -638,17 +649,6 @@ if __name__ == "__main__":
     proxy_port = 8080
     web_port = 8081
     db_path = "traffic.db"
-    
-    # Start proxy in a separate thread
-    proxy_thread = threading.Thread(
-        target=start_proxy,
-        args=(proxy_port, db_path),
-        daemon=True
-    )
-    proxy_thread.start()
-    
-    # Start web server
-    manager = ProxyManager(proxy_port, web_port, db_path)
     
     print("\n" + "="*60)
     print("🚀 Traffic Analyzer Started!")
@@ -662,11 +662,32 @@ if __name__ == "__main__":
     print("   Visit http://mitm.it after configuring the proxy")
     print("="*60 + "\n")
     
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(start_web_server(manager))
+    # Start web server first
+    manager = ProxyManager(proxy_port, web_port, db_path)
     
+    async def run_web_server():
+        await start_web_server(manager)
+        # Keep running
+        while True:
+            await asyncio.sleep(3600)
+    
+    # Run web server in a thread
+    def web_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(run_web_server())
+        except KeyboardInterrupt:
+            pass
+    
+    web_t = threading.Thread(target=web_thread, daemon=True)
+    web_t.start()
+    
+    # Give web server time to start
+    time.sleep(2)
+    
+    # Start proxy in main thread (blocking)
     try:
-        loop.run_forever()
+        start_proxy(proxy_port, db_path)
     except KeyboardInterrupt:
         print("\n\n👋 Shutting down...")
